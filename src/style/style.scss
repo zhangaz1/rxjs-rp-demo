@@ -1,0 +1,15 @@
+@import "_variables";
+
+@mixin flex($display, $justifyContent, $alignItems) {
+  display: $display;
+  justify-content: $justifyContent;
+  align-items: $alignItems;
+}
+
+:root {
+  --content-width: 65rem;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
