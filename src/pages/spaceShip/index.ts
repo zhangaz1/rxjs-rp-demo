@@ -1,11 +1,21 @@
 import {
+	curry,
+	find,
+	any,
+	prop,
+	not,
+	compose,
+} from 'ramda';
+
+import {
 	range,
 	interval,
 	fromEvent,
 	combineLatest,
 	Observable,
 	merge,
-	Timestamp
+	Timestamp,
+	Subject,
 } from 'rxjs';
 import {
 	map,
@@ -18,6 +28,8 @@ import {
 	timestamp,
 	tap,
 	distinctUntilChanged,
+	takeWhile,
+	concat,
 } from 'rxjs/operators';
 
 interface IX {
@@ -26,6 +38,11 @@ interface IX {
 
 interface IPoint extends IX {
 	y: number;
+}
+
+interface IEnemy extends IPoint {
+	shots: IPoint[];
+	isDead: boolean;
 }
 
 interface IStar extends IPoint {
@@ -38,17 +55,25 @@ const ctx = canvas.getContext('2d');
 const HERO_Y = canvas.height - 30;
 const SHOOTING_SPEED = 15;
 
-
+const score$$ = new Subject<number>();
 
 const game$ = createGameStream();
 
 // @ts-ignore
-game$.subscribe(({ stars, spaceShip, enemies, heroShots }) => {
+game$.subscribe(({ stars, spaceShip, enemies, heroShots, score }) => {
 	paintStars(stars);
 	paintSpaceShip(spaceShip.x, spaceShip.y);
 	paintEnemies(enemies);
-	paintHeroShots(heroShots);
+	paintHeroShots(heroShots, enemies);
+	paintScore(score);
 });
+
+function createScoreStream(scoreSubject: Observable<number>) {
+	return scoreSubject.pipe(
+		startWith(0),
+		scan((prev, cur) => prev + cur, 0)
+	);
+}
 
 function createHeroShotsStream(spaceShip$: Observable<IPoint>) {
 	return combineLatest(
@@ -63,7 +88,8 @@ function createHeroShotsStream(spaceShip$: Observable<IPoint>) {
 		scan((shotArray: IPoint[], shot: IX) => {
 			shotArray.push({ x: shot.x, y: HERO_Y });
 			return shotArray;
-		}, [] as IPoint[])
+		}, [] as IPoint[]),
+		startWith([] as IPoint[])
 	);
 }
 
@@ -80,16 +106,37 @@ function createPlayerFiringStream() {
 }
 
 function createEnemiesStream() {
-	var ENEMY_FREQ = 1500;
+	const ENEMY_FREQ = 1500;
+	const ENEMY_SHOOTING_FREQ = 750;
+
 	return interval(ENEMY_FREQ).pipe(
 		scan(function (enemyArray) {
-			var enemy: IPoint = {
+			var enemy: IEnemy = {
 				x: Math.random() * canvas.width,
-				y: -30
+				y: -30,
+				shots: [] as IPoint[],
+				isDead: false,
 			};
+
+			const subscripion = interval(ENEMY_SHOOTING_FREQ).subscribe(() => {
+				let shots = enemy.shots;
+				if (!enemy.isDead) {
+					shots.push({
+						x: enemy.x,
+						y: enemy.y
+					});
+				}
+				enemy.shots = shots.filter(isVisible);
+
+				if (enemy.isDead && enemy.shots.length < 1) {
+					subscripion.unsubscribe();
+				}
+			});
+
 			enemyArray.push(enemy);
-			return enemyArray;
-		}, [] as IPoint[])
+			return enemyArray.filter(isVisible)
+				.filter(compose(not, prop('isDead')));
+		}, [] as IEnemy[])
 	);
 
 }
@@ -98,18 +145,31 @@ function createGameStream() {
 	const spaceShip$ = createSpaceShipStream();
 
 	return combineLatest(
-		createStarStream(),
-		spaceShip$,
-		createEnemiesStream(),
-		createHeroShotsStream(spaceShip$),
-		(
-			stars: IStar[],
-			spaceShip: IPoint,
-			enemies: IPoint[],
-			heroShots: IPoint[],
-		) => ({ stars, spaceShip, enemies, heroShots })
+		createStarStream() as Observable<IStar[]>,
+		spaceShip$ as Observable<IPoint>,
+		createEnemiesStream() as Observable<IEnemy[]>,
+		createHeroShotsStream(spaceShip$) as Observable<IPoint[]>,
+		createScoreStream(score$$),
 	).pipe(
-		sampleTime(40)
+		map(
+			([
+				stars,
+				spaceShip,
+				enemies,
+				heroShots,
+				score
+			]) => ({
+				stars,
+				spaceShip,
+				enemies,
+				heroShots,
+				score
+			})
+		),
+		sampleTime(40),
+		takeWhile(function (actors: any) {
+			return !gameOver(actors.spaceShip, actors.enemies);
+		}),
 	);
 }
 
@@ -158,8 +218,6 @@ function createStarStream() {
 	) as Observable<IStar[]>;
 }
 
-
-
 function paintStars(stars: IStar[]) {
 	if (!ctx) {
 		return;
@@ -194,16 +252,29 @@ function getRandomInt(min: number, max: number) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function paintEnemies(enemies: IPoint[]) {
+function paintEnemies(enemies: IEnemy[]) {
 	enemies.forEach(function (enemy) {
-		enemy.y += 5;
-		enemy.x += getRandomInt(-15, 15);
-		drawTriangle(enemy.x, enemy.y, 20, '#00ff00', 'down');
+		if (!enemy.isDead) {
+			enemy.y += 5;
+			enemy.x += getRandomInt(-15, 15);
+			drawTriangle(enemy.x, enemy.y, 20, '#00ff00', 'down');
+		}
+		enemy.shots.forEach(shot => {
+			shot.y += SHOOTING_SPEED;
+			drawTriangle(shot.x, shot.y, 5, '#00ffff', 'down');
+		});
 	});
 }
 
-function paintHeroShots(heroShots: IPoint[]) {
+function paintHeroShots(heroShots: IPoint[], enemies: IEnemy[]) {
 	heroShots.forEach(function (shot) {
+		const hited = find((enemy: IEnemy) => !enemy.isDead && collision(shot, enemy))(enemies);
+		if (hited) {
+			hited.isDead = true;
+			shot.x = shot.y = -100;
+			score$$.next(10);
+		}
+
 		shot.y -= SHOOTING_SPEED;
 		drawTriangle(shot.x, shot.y, 5, '#ffff00', 'up');
 	});
@@ -213,4 +284,30 @@ function trace(prefix: string) {
 	return tap(function log(...args: any[]) {
 		console.log(prefix, ...args);
 	});
+}
+
+function isVisible(obj: IPoint) {
+	return obj.x > -40 && obj.x < canvas.width + 40
+		&& obj.y > -40 && obj.y < canvas.height + 40;
+}
+
+function collision(target1: IPoint, target2: IPoint) {
+	return Math.abs(target1.x - target2.x) < 20
+		&& Math.abs(target1.y - target2.y) < 20;
+}
+
+function gameOver(ship: IPoint, enemies: IEnemy[]) {
+	const hitShip = curry(collision)(ship);
+	const hited = (enemy: IEnemy) => hitShip(enemy) || any(hitShip)(enemy.shots);
+	return any(hited)(enemies);
+}
+
+function paintScore(score: number) {
+	if (!ctx) {
+		return;
+	}
+
+	ctx.fillStyle = '#ffffff';
+	ctx.font = 'blold 26px sans-serif';
+	ctx.fillText('Score: ' + score, 40, 43);
 }
