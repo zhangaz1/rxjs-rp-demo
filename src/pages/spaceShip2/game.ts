@@ -7,15 +7,17 @@ import * as diagram from './diagram';
 export function initGame(win: Window, config: IConfig) {
 	const canvas = diagram.createCanvas(win, config);
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+
 	const game = {
-		clear: diagram.clearDiagram
+		clear: function () {
+			diagram.clearDiagram(ctx, canvas, config);
+		},
+		start: function () {
+			this.clear();
+		},
 	};
 
-	game.clear(ctx, canvas, config);
-
 	return {
-		start() {
-			console.log('init game!');
-		},
+		start: game.start.bind(game),
 	};
 }
