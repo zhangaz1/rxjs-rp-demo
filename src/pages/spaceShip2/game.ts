@@ -1,4 +1,7 @@
+import * as r from 'ramda';
 import * as rx from 'rxjs';
+import * as rxo from 'rxjs/operators';
+import { createWindowSizeStream } from './sources';
 
 import {
 	IConfig,
@@ -9,23 +12,32 @@ import * as diagram from './diagram';
 import { createStarsStream } from './star';
 
 export function initGame(win: Window, config: IConfig) {
-	const canvas = diagram.createCanvas(win, config);
-	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 	const game = {
-		clear: function () {
-			diagram.clearDiagram(ctx, canvas, config);
-		},
 		start: function () {
-			this.clear();
+			const canvas = diagram.createCanvas(win);
+
+			const winSize$ = createWindowSizeStream(win);
+			const config$: rx.Observable<IConfig> = winSize$.pipe(
+				rxo.map(size => r.merge(config, size)),
+			);
+
+			const canvas$ = config$.pipe(
+				rxo.map(config => {
+					canvas.width = config.width;
+					canvas.height = config.height;
+					return canvas;
+				})
+			);
 
 			const refresh$ = createRefreshStream(config);
 			const stars$ = createStarsStream(refresh$, config);
 
-			const game$ = createGameStream(stars$);
-			game$.subscribe((stars) => {
-				console.log('stars:', stars);
-			})
+			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$);
+
+			// @ts-ignore
+			game$.subscribe(refreshDiagram);
+
 		},
 	};
 
@@ -38,6 +50,10 @@ function createRefreshStream(config: IConfig) {
 	return rx.interval(config.refreshFreq);
 }
 
-function createGameStream(star$: rx.Observable<IStar[]>) {
-	return rx.combineLatest(star$);
+function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[]]) {
+	const [refresh, config, canvas, stars] = cbr;
+	console.log('refresh:', stars);
+
+	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+	diagram.clearDiagram(ctx, config as IConfig);
 }

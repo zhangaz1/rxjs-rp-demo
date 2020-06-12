@@ -1,4 +1,4 @@
-import { config } from './config';
+import { defaultConfig } from './config';
 import { initGame } from './game';
 
 run();
@@ -6,6 +6,7 @@ run();
 // return void (0);
 
 function run() {
-	const game = initGame(window, config);
+	const win = window;
+	const game = initGame(win, defaultConfig);
 	game.start();
 }
