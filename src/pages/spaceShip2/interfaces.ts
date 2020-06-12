@@ -11,10 +11,12 @@ export interface ISize {
 
 export interface IConfig extends ISize {
 	stars: number;
+	starColor: string;
+	starSize: number;
 	refreshFreq: number;
 
 	playgroundBackground: string;
 	spaceShipSpeed: number;
 };
 
-export interface IStar extends IPoint { }
+export interface IStar extends IPoint, ISize { }

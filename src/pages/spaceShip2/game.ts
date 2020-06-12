@@ -19,7 +19,9 @@ export function initGame(win: Window, config: IConfig) {
 
 			const winSize$ = createWindowSizeStream(win);
 			const config$: rx.Observable<IConfig> = winSize$.pipe(
-				rxo.map(size => r.merge(config, size)),
+				rxo.map(size => {
+					return r.merge(config, size);
+				}),
 			);
 
 			const canvas$ = config$.pipe(
@@ -30,8 +32,8 @@ export function initGame(win: Window, config: IConfig) {
 				})
 			);
 
-			const refresh$ = createRefreshStream(config);
-			const stars$ = createStarsStream(refresh$, config);
+			const refresh$ = createRefreshStream(config$);
+			const stars$ = createStarsStream(refresh$, config$);
 
 			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$);
 
@@ -46,8 +48,10 @@ export function initGame(win: Window, config: IConfig) {
 	};
 }
 
-function createRefreshStream(config: IConfig) {
-	return rx.interval(config.refreshFreq);
+function createRefreshStream(config$: rx.Observable<IConfig>) {
+	return config$.pipe(
+		rxo.switchMap(config => rx.interval(config.refreshFreq))
+	);
 }
 
 function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[]]) {
@@ -56,4 +60,5 @@ function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[]]) {
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);
+	diagram.drawStars(ctx, config, stars);
 }
