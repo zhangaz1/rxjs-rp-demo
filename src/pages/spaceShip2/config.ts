@@ -3,6 +3,7 @@ import {
 } from './interfaces';
 
 export const config: IConfig = {
+	stars: 256,
 	refreshFreq: 400,
 
 	playgroundBackground: '#000',

@@ -1,4 +1,5 @@
 export interface IConfig {
+	stars: number;
 	refreshFreq: number;
 
 	playgroundBackground: string;

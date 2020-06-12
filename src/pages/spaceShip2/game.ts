@@ -23,6 +23,9 @@ export function initGame(win: Window, config: IConfig) {
 			const stars$ = createStarsStream(refresh$, config);
 
 			const game$ = createGameStream(stars$);
+			game$.subscribe((stars) => {
+				console.log('stars:', stars);
+			})
 		},
 	};
 
@@ -36,5 +39,5 @@ function createRefreshStream(config: IConfig) {
 }
 
 function createGameStream(star$: rx.Observable<IStar[]>) {
-
+	return rx.combineLatest(star$);
 }
