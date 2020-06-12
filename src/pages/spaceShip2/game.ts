@@ -56,7 +56,6 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 
 function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[]]) {
 	const [refresh, config, canvas, stars] = cbr;
-	console.log('refresh:', stars);
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);

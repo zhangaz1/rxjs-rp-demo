@@ -17,7 +17,24 @@ export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.O
 			rxo.map(createStars),
 		);
 
-	return star$;
+	return rx.combineLatest(refresh$, star$, config$)
+		.pipe(
+			// @ts-ignore
+			rxo.map(moveStars)
+		);
+
+
+}
+
+function moveStars(cbr: [number, IStar[], IConfig]) {
+	const [refresh, stars, config] = cbr;
+	return r.map((star: IStar) => {
+		star.y += config.starSpeed;
+		if (star.y > config.height) {
+			star.y = 0;
+		}
+		return star;
+	})(stars);
 }
 
 function createStars(cbr: [number[], IConfig]) {

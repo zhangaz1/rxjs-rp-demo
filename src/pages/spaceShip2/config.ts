@@ -7,7 +7,9 @@ export const defaultConfig: IConfig = {
 	stars: 256,
 	starColor: '#fff',
 	starSize: 3,
-	refreshFreq: 400, // 画布刷新频率（ms)
+	starSpeed: 5,
+
+	refreshFreq: 80, // 画布刷新频率（ms)
 
 	playgroundBackground: '#000',
 	spaceShipSpeed: 20,

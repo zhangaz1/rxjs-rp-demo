@@ -13,6 +13,8 @@ export interface IConfig extends ISize {
 	stars: number;
 	starColor: string;
 	starSize: number;
+	starSpeed: number;
+
 	refreshFreq: number;
 
 	playgroundBackground: string;
