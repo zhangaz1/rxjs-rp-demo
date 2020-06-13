@@ -7,7 +7,7 @@ export const defaultConfig: IConfig = {
 	stars: 256,
 	starColor: '#fff',
 	starSize: 3,
-	starSpeed: 5,
+	starSpeed: 1,
 
 	refreshFreq: 80, // 画布刷新频率（ms)
 

@@ -32,7 +32,7 @@ export function initGame(win: Window, config: IConfig) {
 				})
 			);
 
-			const refresh$ = createRefreshStream(config$);
+			const refresh$ = rx.animationFrames(); // createRefreshStream(config$);
 			const stars$ = createStarsStream(refresh$, config$);
 
 			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$);

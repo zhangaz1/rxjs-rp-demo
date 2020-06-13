@@ -17,13 +17,13 @@ export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.O
 			rxo.map(createStars),
 		);
 
-	return rx.combineLatest(refresh$, star$, config$)
+	const movingStars = rx.combineLatest(refresh$, star$, config$)
 		.pipe(
 			// @ts-ignore
 			rxo.map(moveStars)
 		);
 
-
+	return movingStars;
 }
 
 function moveStars(cbr: [number, IStar[], IConfig]) {
