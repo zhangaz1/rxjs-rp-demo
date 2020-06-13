@@ -31,7 +31,7 @@ function moveStars(cbr: [number, IStar[], IConfig]) {
 	return r.map((star: IStar) => {
 		star.y += config.starSpeed;
 		if (star.y > config.height) {
-			star.y = 0;
+			star.y -= config.height;
 		}
 		return star;
 	})(stars);
