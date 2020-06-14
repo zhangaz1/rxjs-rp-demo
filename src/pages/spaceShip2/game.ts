@@ -1,15 +1,18 @@
 import * as r from 'ramda';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
-import { createWindowSizeStream } from './sources';
 
 import {
 	IConfig,
 	IStar,
+	ISpaceShip
 } from './interfaces';
+
+import { createWindowSizeStream } from './sources';
 
 import * as diagram from './diagram';
 import { createStarsStream } from './star';
+import { createSpaceShipStream } from './spaceShip';
 
 export function initGame(win: Window, config: IConfig) {
 
@@ -34,8 +37,9 @@ export function initGame(win: Window, config: IConfig) {
 
 			const refresh$ = rx.animationFrames(); // createRefreshStream(config$);
 			const stars$ = createStarsStream(refresh$, config$);
+			const spaceShip$ = createSpaceShipStream(canvas, config$);
 
-			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$);
+			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$, spaceShip$);
 
 			// @ts-ignore
 			game$.subscribe(refreshDiagram);
@@ -54,10 +58,11 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 	);
 }
 
-function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[]]) {
-	const [refresh, config, canvas, stars] = cbr;
+function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[], ISpaceShip]) {
+	const [refresh, config, canvas, stars, spaceShip] = cbr;
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);
 	diagram.drawStars(ctx, config, stars);
+	diagram.drawSpaceShip(ctx, config, spaceShip);
 }

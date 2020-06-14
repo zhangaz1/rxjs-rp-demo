@@ -1,4 +1,4 @@
-import { IConfig } from './interfaces';
+import { Direction, IConfig } from './interfaces';
 
 export const defaultConfig: IConfig = {
 	width: 100, // 默认画布大小，会根据window大小自行覆盖
@@ -12,5 +12,10 @@ export const defaultConfig: IConfig = {
 	refreshFreq: 80, // 画布刷新频率（ms)
 
 	playgroundBackground: '#000',
+
 	spaceShipSpeed: 20,
+	spaceShipYMargin: 15,
+	spaceShipColor: '#f00',
+	spaceshipWidth: 20,
+	spaceShipDirection: Direction.Up,
 };
