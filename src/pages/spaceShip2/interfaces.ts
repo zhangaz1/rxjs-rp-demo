@@ -27,9 +27,16 @@ export interface IConfig extends ISize {
 	spaceShipYMargin: number;
 	spaceShipColor: string;
 	spaceshipWidth: number;
-	spaceShipDirection: Direction
+	spaceShipDirection: Direction;
+
+	enemyFreq: number;
+	enemySpeed: number;
+	enemyColor: string;
+	enemyWidth: number;
+	enemyDirection: Direction;
 };
 
 export interface IStar extends IPoint, ISize { };
 
 export interface ISpaceShip extends IPoint { };
+export interface IEnemy extends IPoint { };

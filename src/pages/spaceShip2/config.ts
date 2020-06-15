@@ -18,4 +18,10 @@ export const defaultConfig: IConfig = {
 	spaceShipColor: '#f00',
 	spaceshipWidth: 20,
 	spaceShipDirection: Direction.Up,
+
+	enemyFreq: 1500,
+	enemySpeed: 2,
+	enemyColor: '#0f0',
+	enemyWidth: 10,
+	enemyDirection: Direction.Down,
 };

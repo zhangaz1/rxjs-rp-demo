@@ -5,7 +5,8 @@ import * as rxo from 'rxjs/operators';
 import {
 	IConfig,
 	IStar,
-	ISpaceShip
+	ISpaceShip,
+	IEnemy,
 } from './interfaces';
 
 import { createWindowSizeStream } from './sources';
@@ -13,6 +14,7 @@ import { createWindowSizeStream } from './sources';
 import * as diagram from './diagram';
 import { createStarsStream } from './star';
 import { createSpaceShipStream } from './spaceShip';
+import { createEnemiesStream } from './enemy';
 
 export function initGame(win: Window, config: IConfig) {
 
@@ -38,8 +40,9 @@ export function initGame(win: Window, config: IConfig) {
 			const refresh$ = rx.animationFrames(); // createRefreshStream(config$);
 			const stars$ = createStarsStream(refresh$, config$);
 			const spaceShip$ = createSpaceShipStream(canvas, config$);
+			const enemies$ = createEnemiesStream(refresh$, config$);
 
-			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$, spaceShip$);
+			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$, spaceShip$, enemies$);
 
 			// @ts-ignore
 			game$.subscribe(refreshDiagram);
@@ -58,11 +61,12 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 	);
 }
 
-function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[], ISpaceShip]) {
-	const [refresh, config, canvas, stars, spaceShip] = cbr;
+function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[], ISpaceShip, IEnemy[]]) {
+	const [refresh, config, canvas, stars, spaceShip, enemies] = cbr;
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);
 	diagram.drawStars(ctx, config, stars);
 	diagram.drawSpaceShip(ctx, config, spaceShip);
+	diagram.drawEnemies(ctx, config, enemies);
 }
