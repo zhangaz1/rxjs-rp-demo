@@ -44,7 +44,7 @@ export function initGame(win: Window, config: IConfig) {
 
 			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, enemies$)
 				.pipe(
-					rxo.sample(refresh$)
+					rxo.sample(refresh$),
 				);
 
 			// @ts-ignore
