@@ -42,7 +42,10 @@ export function initGame(win: Window, config: IConfig) {
 			const spaceShip$ = createSpaceShipStream(canvas, config$);
 			const enemies$ = createEnemiesStream(refresh$, config$);
 
-			const game$ = rx.combineLatest(refresh$, config$, canvas$, stars$, spaceShip$, enemies$);
+			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, enemies$)
+				.pipe(
+					rxo.sample(refresh$)
+				);
 
 			// @ts-ignore
 			game$.subscribe(refreshDiagram);
@@ -61,8 +64,11 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 	);
 }
 
-function refreshDiagram(cbr: [number, IConfig, HTMLCanvasElement, IStar[], ISpaceShip, IEnemy[]]) {
-	const [refresh, config, canvas, stars, spaceShip, enemies] = cbr;
+// let refreshCount: number = 0;
+function refreshDiagram(cbr: [IConfig, HTMLCanvasElement, IStar[], ISpaceShip, IEnemy[]]) {
+	// console.log('refresh count:', refreshCount++);
+
+	const [config, canvas, stars, spaceShip, enemies] = cbr;
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);
