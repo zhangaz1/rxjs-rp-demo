@@ -1,33 +1,33 @@
 import * as r from 'ramda';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
-import { getRandomInt } from './utils';
+import {
+	getRandomInt,
+	scanner,
+} from './utils';
 import { IConfig, IStar } from './interfaces';
 
 export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>) {
 	const starNumber$ = rx.range(0, 256)
 		.pipe(
-			// @ts-ignore
-			rxo.scan(r.flip(r.append), [] as number[])
+			rxo.scan(scanner, [] as number[]),
 		);
 
 	const star$ = rx.combineLatest(starNumber$, config$)
 		.pipe(
-			// @ts-ignore
 			rxo.map(createStars),
 		);
 
-	const movingStars = rx.combineLatest(refresh$, star$, config$)
+	const movingStars = rx.combineLatest(refresh$, config$, star$,)
 		.pipe(
-			// @ts-ignore
 			rxo.map(moveStars)
 		);
 
 	return movingStars;
 }
 
-function moveStars(cbr: [number, IStar[], IConfig]) {
-	const [refresh, stars, config] = cbr;
+function moveStars(cbr: any) {
+	const [refresh, config, stars] = cbr as [number, IConfig, IStar[]];
 	return r.map((star: IStar) => {
 		star.y += config.starSpeed;
 		if (star.y > config.height) {
@@ -37,8 +37,8 @@ function moveStars(cbr: [number, IStar[], IConfig]) {
 	})(stars);
 }
 
-function createStars(cbr: [number[], IConfig]) {
-	const [stars, config] = cbr;
+function createStars(cbr: any) {
+	const [stars, config] = cbr as [number[], IConfig];
 	return r.map(r.partial(createStar, [config]))(stars);
 }
 

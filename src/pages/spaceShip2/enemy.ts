@@ -2,7 +2,10 @@ import * as r from 'ramda';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
-import { getRandomInt } from './utils';
+import {
+	getRandomInt,
+	scanner,
+} from './utils';
 
 import { IConfig, IEnemy } from './interfaces';
 
@@ -15,7 +18,7 @@ export function createEnemiesStream(refresh$: rx.Observable<number>, config$: rx
 	const enemies$ = rx.combineLatest(enemySource$, config$)
 		.pipe(
 			rxo.map(createEnemy),
-			rxo.scan((acc: IEnemy[], current: IEnemy) => { acc.push(current); return acc }, []),
+			rxo.scan(scanner, [] as IEnemy[]),
 		);
 
 	const movingEnemies$ = rx.combineLatest(refresh$, config$, enemies$)
