@@ -23,5 +23,6 @@ export const defaultConfig: IConfig = {
 	enemySpeed: 2,
 	enemyColor: '#0f0',
 	enemyWidth: 10,
+	enemyWidthRange: 5,
 	enemyDirection: Direction.Down,
 };

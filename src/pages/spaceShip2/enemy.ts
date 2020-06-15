@@ -33,6 +33,7 @@ function moveEnemies(crb: any) {
 	const [n, config, enemies] = crb as [number, IConfig, IEnemy[]];
 	return r.forEach((enemy: IEnemy) => {
 		enemy.y += config.enemySpeed;
+		enemy.x += getRandomInt(-config.enemyWidthRange, config.enemyWidthRange);
 		if (enemy.y > config.height) {
 			enemy.y -= config.height;
 		}

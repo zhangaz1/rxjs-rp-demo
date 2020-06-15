@@ -33,6 +33,7 @@ export interface IConfig extends ISize {
 	enemySpeed: number;
 	enemyColor: string;
 	enemyWidth: number;
+	enemyWidthRange: number;
 	enemyDirection: Direction;
 };
 
