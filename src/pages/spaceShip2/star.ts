@@ -13,15 +13,15 @@ export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.O
 			rxo.scan(scanner, [] as number[]),
 		);
 
-	const star$ = rx.combineLatest(starNumber$, config$)
-		.pipe(
-			rxo.map(createStars),
-		);
+	const star$ = starNumber$.pipe(
+		rxo.withLatestFrom(config$),
+		rxo.map(createStars),
+	);
 
-	const movingStars = rx.combineLatest(refresh$, config$, star$,)
-		.pipe(
-			rxo.map(moveStars)
-		);
+	const movingStars = refresh$.pipe(
+		rxo.withLatestFrom(config$, star$),
+		rxo.map(moveStars)
+	);
 
 	return movingStars;
 }
