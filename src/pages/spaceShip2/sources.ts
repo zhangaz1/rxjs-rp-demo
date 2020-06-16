@@ -2,6 +2,10 @@ import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 import { ISize } from './interfaces';
 
+export function createDocumentKeydownStream(win: Window) {
+	return rx.fromEvent(win.document, 'keydown');
+};
+
 export function createWindowSizeStream(win: Window) {
 	return rx.fromEvent(win, 'resize')
 		.pipe(
@@ -9,7 +13,7 @@ export function createWindowSizeStream(win: Window) {
 			rxo.startWith(win),
 			rxo.map(getWinSize)
 		);
-}
+};
 
 function getWinSize(win: Window): ISize {
 	return {

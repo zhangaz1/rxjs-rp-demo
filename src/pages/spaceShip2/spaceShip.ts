@@ -1,8 +1,8 @@
-import { IConfig } from './interfaces';
+import { IConfig, ISpaceShip } from './interfaces';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
-export function createSpaceShipStream(canvas: HTMLCanvasElement, config$: rx.Observable<IConfig>) {
+export function createSpaceShipStream(canvas: HTMLCanvasElement, config$: rx.Observable<IConfig>): rx.Observable<ISpaceShip> {
 	const firs$ = config$.pipe(
 		rxo.take(1),
 		rxo.map(config => ({

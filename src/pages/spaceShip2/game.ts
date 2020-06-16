@@ -6,15 +6,20 @@ import {
 	IConfig,
 	IStar,
 	ISpaceShip,
+	IHeroShot,
 	IEnemy,
 } from './interfaces';
 
-import { createWindowSizeStream } from './sources';
+import {
+	createWindowSizeStream,
+	createDocumentKeydownStream,
+} from './sources';
 
 import * as diagram from './diagram';
 import { createStarsStream } from './star';
 import { createSpaceShipStream } from './spaceShip';
 import { createEnemiesStream } from './enemy';
+import { createHeroShotsStream } from './heroShots';
 
 export function initGame(win: Window, config: IConfig) {
 
@@ -40,9 +45,11 @@ export function initGame(win: Window, config: IConfig) {
 			const refresh$ = rx.animationFrames(); // createRefreshStream(config$);
 			const stars$ = createStarsStream(refresh$, config$);
 			const spaceShip$ = createSpaceShipStream(canvas, config$);
+			const documentKeydown$ = createDocumentKeydownStream(win);
+			const heroShots$ = createHeroShotsStream(canvas, documentKeydown$, refresh$, config$, spaceShip$);
 			const enemies$ = createEnemiesStream(refresh$, config$);
 
-			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, enemies$)
+			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, heroShots$, enemies$)
 				.pipe(
 					rxo.sample(refresh$),
 				);
@@ -65,14 +72,15 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 }
 
 // let refreshCount: number = 0;
-function refreshDiagram(cbr: [IConfig, HTMLCanvasElement, IStar[], ISpaceShip, IEnemy[]]) {
+function refreshDiagram(cbr: [IConfig, HTMLCanvasElement, IStar[], ISpaceShip, IHeroShot[], IEnemy[]]) {
 	// console.log('refresh count:', refreshCount++);
 
-	const [config, canvas, stars, spaceShip, enemies] = cbr;
+	const [config, canvas, stars, spaceShip, heroShots, enemies] = cbr;
 
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 	diagram.clearDiagram(ctx, config as IConfig);
 	diagram.drawStars(ctx, config, stars);
 	diagram.drawSpaceShip(ctx, config, spaceShip);
+	diagram.drawHeroShots(ctx, config, heroShots);
 	diagram.drawEnemies(ctx, config, enemies);
 }

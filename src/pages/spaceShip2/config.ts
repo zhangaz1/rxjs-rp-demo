@@ -19,6 +19,12 @@ export const defaultConfig: IConfig = {
 	spaceshipWidth: 20,
 	spaceShipDirection: Direction.Up,
 
+	heroShotWidth: 5,
+	heroShotColor: '#ff0',
+	heroShotLimit: 200,
+	heroShotSpeed: -10,
+	heroShotDirection: Direction.Up,
+
 	enemyFreq: 1500,
 	enemySpeed: 2,
 	enemyColor: '#0f0',

@@ -29,6 +29,12 @@ export interface IConfig extends ISize {
 	spaceshipWidth: number;
 	spaceShipDirection: Direction;
 
+	heroShotWidth: number;
+	heroShotColor: string;
+	heroShotLimit: number;
+	heroShotSpeed: number;
+	heroShotDirection: Direction;
+
 	enemyFreq: number;
 	enemySpeed: number;
 	enemyColor: string;
@@ -40,4 +46,5 @@ export interface IConfig extends ISize {
 export interface IStar extends IPoint, ISize { };
 
 export interface ISpaceShip extends IPoint { };
+export interface IHeroShot extends IPoint { };
 export interface IEnemy extends IPoint { };
