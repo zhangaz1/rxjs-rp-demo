@@ -11,19 +11,22 @@ export function createSpaceShipStream(canvas: HTMLCanvasElement, config$: rx.Obs
 		}))
 	);
 
-	return rx.combineLatest(
-		rx.fromEvent(canvas, 'mousemove'),
-		config$
-	).pipe(
-		rxo.map(crb => {
-			const [event, config] = crb as [MouseEvent, IConfig];
-			return {
-				x: event.clientX,
-				y: config.height - config.spaceShipYMargin,
-			};
-		}),
-		rxo.merge(
-			firs$
-		),
-	);
+	return rx.fromEvent(canvas, 'mousemove')
+		.pipe(
+			rxo.distinctUntilChanged(
+				(e1: Event, e2: Event) =>
+					(e1 as MouseEvent).clientX === (e2 as MouseEvent).clientX
+			),
+			rxo.withLatestFrom(config$),
+			rxo.map(crb => {
+				const [event, config] = crb as [MouseEvent, IConfig];
+				return {
+					x: event.clientX,
+					y: config.height - config.spaceShipYMargin,
+				};
+			}),
+			rxo.merge(
+				firs$
+			),
+		);
 }
