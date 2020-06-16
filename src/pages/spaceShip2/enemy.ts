@@ -15,16 +15,16 @@ export function createEnemiesStream(refresh$: rx.Observable<number>, config$: rx
 		rxo.switchAll(),
 	);
 
-	const enemies$ = rx.combineLatest(enemySource$, config$)
-		.pipe(
-			rxo.map(createEnemy),
-			rxo.scan(scanner, [] as IEnemy[]),
-		);
+	const enemies$ = enemySource$.pipe(
+		rxo.withLatestFrom(config$),
+		rxo.map(createEnemy),
+		rxo.scan(scanner, [] as IEnemy[]),
+	);
 
-	const movingEnemies$ = rx.combineLatest(refresh$, config$, enemies$)
-		.pipe(
-			rxo.map(moveEnemies),
-		);
+	const movingEnemies$ = refresh$.pipe(
+		rxo.withLatestFrom(config$, enemies$),
+		rxo.map(moveEnemies),
+	);
 
 	return movingEnemies$;
 }
