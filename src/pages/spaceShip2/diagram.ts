@@ -43,7 +43,7 @@ export function drawHeroShots(ctx: CanvasRenderingContext2D, config: IConfig, he
 
 export function drawEnemies(ctx: CanvasRenderingContext2D, config: IConfig, enemies: IEnemy[]) {
 	r.forEach((enemy: IEnemy) => {
-		drawTriangle(ctx, enemy.x, enemy.y, config.enemyWidth, config.enemyColor, config.enemyDirection);
+		drawTriangle(ctx, enemy.x, enemy.y, config.enemyWidth, enemy.isDead ? '#fff' : config.enemyColor, config.enemyDirection);
 	})(enemies);
 };
 

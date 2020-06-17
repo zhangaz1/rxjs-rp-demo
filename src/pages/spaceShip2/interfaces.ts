@@ -35,6 +35,8 @@ export interface IConfig extends ISize {
 	heroShotSpeed: number;
 	heroShotDirection: Direction;
 
+	collisionDistance: number;
+
 	enemyFreq: number;
 	enemySpeed: number;
 	enemyColor: string;
@@ -47,4 +49,6 @@ export interface IStar extends IPoint, ISize { };
 
 export interface ISpaceShip extends IPoint { };
 export interface IHeroShot extends IPoint { };
-export interface IEnemy extends IPoint { };
+export interface IEnemy extends IPoint {
+	isDead: boolean;
+};

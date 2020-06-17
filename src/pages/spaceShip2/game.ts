@@ -10,6 +10,8 @@ import {
 	IEnemy,
 } from './interfaces';
 
+import { collision } from './utils';
+
 import {
 	createWindowSizeStream,
 	createDocumentKeydownStream,
@@ -46,8 +48,19 @@ export function initGame(win: Window, config: IConfig) {
 			const stars$ = createStarsStream(refresh$, config$);
 			const spaceShip$ = createSpaceShipStream(canvas, config$);
 			const documentKeydown$ = createDocumentKeydownStream(win);
-			const heroShots$ = createHeroShotsStream(canvas, documentKeydown$, refresh$, config$, spaceShip$);
+			const collision$ = config$.pipe(
+				rxo.map(config => r.partial(collision, [config.collisionDistance])),
+			);
 			const enemies$ = createEnemiesStream(refresh$, config$);
+			const heroShots$ = createHeroShotsStream(
+				canvas,
+				documentKeydown$ as rx.Observable<KeyboardEvent>,
+				refresh$,
+				config$,
+				spaceShip$,
+				enemies$,
+				collision$
+			);
 
 			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, heroShots$, enemies$)
 				.pipe(

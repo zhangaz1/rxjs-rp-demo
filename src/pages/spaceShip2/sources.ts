@@ -11,7 +11,7 @@ export function createWindowSizeStream(win: Window) {
 		.pipe(
 			rxo.map((event: Event) => (event.target as Window)),
 			rxo.startWith(win),
-			rxo.map(getWinSize)
+			rxo.map(getWinSize),
 		);
 };
 

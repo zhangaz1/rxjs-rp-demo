@@ -25,6 +25,8 @@ export const defaultConfig: IConfig = {
 	heroShotSpeed: -10,
 	heroShotDirection: Direction.Up,
 
+	collisionDistance: 15,
+
 	enemyFreq: 1500,
 	enemySpeed: 2,
 	enemyColor: '#0f0',
