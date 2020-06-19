@@ -5,7 +5,7 @@ import * as rxo from 'rxjs/operators';
 
 import { watch } from 'rxjs-watcher';
 
-import { observer } from './../utils';
+import { observer } from '../utils';
 
 const duration = 30;
 
