@@ -9,12 +9,12 @@ import { observer } from './../utils';
 
 const duration = 30;
 
-const source$ = rx.interval(1000)
+const source1$ = rx.interval(1000)
 	.pipe(
-		watch('interval(1000)', duration),
+		watch('source1$', duration),
 		rxo.filter(v => v % 2 === 0),
 		watch('filter result', duration),
 		rxo.take(5),
 	);
 
-source$.subscribe(observer);
+source1$.subscribe(observer);
