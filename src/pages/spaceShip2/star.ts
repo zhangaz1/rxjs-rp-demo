@@ -5,9 +5,9 @@ import {
 	getRandomInt,
 	scanner,
 } from './utils';
-import { IConfig, IStar } from './interfaces';
+import { IConfig, IStar, ITimestampData } from './interfaces';
 
-export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>) {
+export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ITimestampData<IStar[]>> {
 	const starNumber$ = rx.range(0, 256)
 		.pipe(
 			rxo.scan(scanner, [] as number[]),
@@ -23,23 +23,26 @@ export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.O
 		rxo.map(moveStars)
 	);
 
-	return movingStars;
+	const withTimestamp$ = movingStars.pipe(
+		rxo.withLatestFrom(refresh$),
+		rxo.map(([stars, refresh]) => ({
+			timestamp: refresh as number,
+			data: stars,
+		})),
+	);
+
+	return withTimestamp$.pipe(rxo.share());
 }
 
 function moveStars(cbr: any) {
 	const [refresh, config, stars] = cbr as [number, IConfig, IStar[]];
-	const movedStars = r.map((star: IStar) => {
+	return r.map((star: IStar) => {
 		star.y += config.starSpeed;
 		if (star.y > config.height) {
 			star.y -= config.height;
 		}
 		return star;
 	})(stars);
-
-	return {
-		timeStamp: refresh,
-		data: movedStars,
-	}
 }
 
 function createStars(cbr: any) {

@@ -1,4 +1,5 @@
 import * as r from 'ramda';
+
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
@@ -7,47 +8,61 @@ import {
 	scanner,
 } from './utils';
 
-import { IConfig, IEnemy } from './interfaces';
+import { IConfig, IEnemy, ITimestampData } from './interfaces';
 
-export function createEnemiesStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>) {
+export function createEnemiesStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ITimestampData<IEnemy[]>> {
 	const enemySource$ = config$.pipe(
 		rxo.map(config => rx.interval(config.enemyFreq)),
 		rxo.switchAll(),
-	);
-
-	const enemies$ = enemySource$.pipe(
 		rxo.withLatestFrom(config$),
 		rxo.map(createEnemy),
-		rxo.scan(function (enemies: IEnemy[], enemy: IEnemy) {
-			enemies.push(enemy);
-			return r.filter(r.propEq('isDead', false))(enemies);
-		}, [] as IEnemy[]),
-		rxo.startWith([]),
-		rxo.share(),
 	);
 
-	const movingEnemies$ = refresh$.pipe(
-		rxo.withLatestFrom(config$, enemies$),
+	const alive = r.filter(r.propEq('isDead', false));
+	const enemies = enemySource$.pipe(
+		rxo.buffer(refresh$),
+		rxo.scan((preEnemies: IEnemy[], newEnemies: IEnemy[]) => {
+			return alive([...preEnemies, ...newEnemies]);
+		}, []),
+	);
+
+	const movingEnemies$ = enemies.pipe(
+		rxo.withLatestFrom(config$),
 		rxo.map(moveEnemies),
 	);
 
-	return movingEnemies$;
+	const withTimestamp = refresh$.pipe(
+		rxo.withLatestFrom(movingEnemies$),
+		rxo.map((cbr: any) => {
+			const [refresh, enemies] = cbr as [number, IEnemy[]];
+			return {
+				timestamp: refresh,
+				data: enemies,
+			}
+		}),
+	);
+
+	return withTimestamp.pipe(rxo.share());
 }
 
 function moveEnemies(crb: any) {
-	const [n, config, enemies] = crb as [number, IConfig, IEnemy[]];
-	return r.pipe(
-		r.filter((enemy: IEnemy) => !enemy.isDead),
-		r.forEach((enemy: IEnemy) => {
-			enemy.y += config.enemySpeed;
-			enemy.x += getRandomInt(-config.enemyWidthRange, config.enemyWidthRange);
-			if (enemy.y > config.height) {
-				enemy.y -= config.height;
-			}
-		})
-	)(enemies);
+	const [enemies, config] = crb as [IEnemy[], IConfig];
+	return r.forEach((enemy: IEnemy) => {
+		enemy.y += config.enemySpeed;
+		enemy.x += getRandomInt(-config.enemyWidthRange, config.enemyWidthRange);
+
+		if (enemy.x < 0) {
+			enemy.x += config.width;
+		}
+		if (enemy.x > config.width) {
+			enemy.x -= config.width;
+		}
+		if (enemy.y > config.height) {
+			enemy.y -= config.height;
+		}
+	})(enemies);
 }
-let nn = 0;
+
 function createEnemy(crb: any) {
 	const [n, config] = crb as [number, IConfig];
 	return {

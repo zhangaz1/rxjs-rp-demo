@@ -3,8 +3,8 @@ export enum Direction {
 	Down = 'Down',
 }
 
-export interface ITimeStampData<T> {
-	timeStamp: number;
+export interface ITimestampData<T> {
+	timestamp: number;
 	data: T;
 }
 
@@ -56,4 +56,13 @@ export interface ISpaceShip extends IPoint { };
 export interface IHeroShot extends IPoint { };
 export interface IEnemy extends IPoint {
 	isDead: boolean;
+};
+
+export interface IGameContext {
+	canvas: HTMLCanvasElement;
+	config: IConfig;
+	stars: IStar[];
+	spaceShip: ISpaceShip;
+	heroShots: IHeroShot[];
+	enemies: IEnemy[];
 };

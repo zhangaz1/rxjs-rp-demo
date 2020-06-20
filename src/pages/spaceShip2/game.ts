@@ -3,12 +3,14 @@ import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
 import {
-	ITimeStampData,
+	ITimestampData,
 	IConfig,
+	IPoint,
 	IStar,
 	ISpaceShip,
 	IHeroShot,
 	IEnemy,
+	IGameContext,
 } from './interfaces';
 
 import { collision } from './utils';
@@ -31,19 +33,16 @@ export function initGame(win: Window, config: IConfig) {
 			const canvas = diagram.createCanvas(win);
 
 			const winSize$ = createWindowSizeStream(win);
+			winSize$.subscribe(size => {
+				canvas.width = size.width;
+				canvas.height = size.height;
+			});
 			const config$: rx.Observable<IConfig> = winSize$.pipe(
 				rxo.map(size => {
 					return r.merge(config, size);
 				}),
 			);
 
-			const canvas$ = config$.pipe(
-				rxo.map(config => {
-					canvas.width = config.width;
-					canvas.height = config.height;
-					return canvas;
-				})
-			);
 
 			const refresh$ = createRefreshStream(config$);
 			const stars$ = createStarsStream(refresh$, config$);
@@ -51,27 +50,66 @@ export function initGame(win: Window, config: IConfig) {
 			const enemies$ = createEnemiesStream(refresh$, config$);
 
 			const documentKeydown$ = createDocumentKeydownStream(win);
-			const collision$ = config$.pipe(
-				rxo.map(config => r.partial(collision, [config.collisionDistance])),
-			);
 			const heroShots$ = createHeroShotsStream(
 				canvas,
 				documentKeydown$ as rx.Observable<KeyboardEvent>,
 				refresh$,
 				config$,
 				spaceShip$,
-				enemies$,
-				collision$
 			);
 
 			const animation$ = rx.animationFrames();
-			const game$ = rx.combineLatest(config$, canvas$, stars$, spaceShip$, heroShots$, enemies$)
+			const collision$ = config$.pipe(
+				rxo.map(config => r.partial(collision, [config.collisionDistance])),
+			);
+			const game$ = rx.combineLatest(refresh$, stars$, spaceShip$, heroShots$, enemies$)
 				.pipe(
+					rxo.map((cbr: any) => {
+						const [refresh, stars, spaceShip, heroShots, enemies] = cbr as [
+							number,
+							ITimestampData<IStar[]>,
+							ITimestampData<ISpaceShip>,
+							ITimestampData<IHeroShot[]>,
+							ITimestampData<IEnemy[]>,
+						];
+
+						return {
+							refresh,
+							stars,
+							spaceShip,
+							heroShots,
+							enemies,
+						};
+					}),
+					rxo.filter((game: any) => {
+						return game.refresh === game.stars.timestamp
+							&& game.refresh === game.spaceShip.timestamp
+							&& game.refresh === game.heroShots.timestamp
+							&& game.refresh === game.enemies.timestamp;
+					}),
 					rxo.sample(animation$),
+					rxo.withLatestFrom(config$),
+					rxo.map((cbr: any) => {
+						const [game, config] = cbr;
+
+						return {
+							config,
+							stars: game.stars.data,
+							spaceShip: game.spaceShip.data,
+							heroShots: game.heroShots.data,
+							enemies: game.enemies.data,
+						} as IGameContext;
+					}),
+					rxo.withLatestFrom(collision$),
+					rxo.map(([game, collision]) => {
+						processCollision(game, collision as Function);
+						return game;
+					}),
 				);
 
-			// @ts-ignore
-			game$.subscribe(refreshDiagram);
+			game$.subscribe((game: IGameContext) => {
+				refreshDiagram(canvas, game);
+			});
 
 		},
 	};
@@ -91,15 +129,32 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 }
 
 // let refreshCount: number = 0;
-function refreshDiagram(cbr: [IConfig, HTMLCanvasElement, ITimeStampData<IStar[]>, ISpaceShip, IHeroShot[], IEnemy[]]) {
-	// console.log('refresh count:', refreshCount++);
-
-	const [config, canvas, stars, spaceShip, heroShots, enemies] = cbr;
-
+function refreshDiagram(canvas: HTMLCanvasElement, game: IGameContext) {
 	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-	diagram.clearDiagram(ctx, config as IConfig);
-	diagram.drawStars(ctx, config, stars.data);
+	const { config, stars, spaceShip, heroShots, enemies } = game;
+
+	diagram.clearDiagram(ctx, config);
+	diagram.drawStars(ctx, config, stars);
 	diagram.drawSpaceShip(ctx, config, spaceShip);
 	diagram.drawHeroShots(ctx, config, heroShots);
 	diagram.drawEnemies(ctx, config, enemies);
+}
+
+
+
+function processCollision(game: IGameContext, collision: Function) {
+	r.forEach((shot: IHeroShot) => {
+		if (shot.y < 0) {
+			return;
+		}
+		const enemy: IEnemy | undefined = r.find((enemy: IEnemy) => {
+			return !enemy.isDead
+				&& collision(shot as IPoint, enemy as IPoint);
+		})(game.enemies);
+
+		if (enemy) {
+			shot.y = -10;
+			enemy.isDead = true;
+		}
+	})(game.heroShots);
 }

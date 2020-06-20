@@ -1,8 +1,8 @@
-import { IConfig, ISpaceShip } from './interfaces';
+import { IConfig, ISpaceShip, ITimestampData } from './interfaces';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
-export function createSpaceShipStream(canvas: HTMLCanvasElement, refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ISpaceShip> {
+export function createSpaceShipStream(canvas: HTMLCanvasElement, refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ITimestampData<ISpaceShip>> {
 	const firs$ = config$.pipe(
 		rxo.take(1),
 		rxo.map(config => ({
@@ -29,5 +29,18 @@ export function createSpaceShipStream(canvas: HTMLCanvasElement, refresh$: rx.Ob
 			}),
 		);
 
-	return rx.concat(firs$, movingSpaceShip$);
+	const spaceShip$ = rx.concat(firs$, movingSpaceShip$) as rx.Observable<ISpaceShip>;
+
+	const withTimestamp = refresh$.pipe(
+		rxo.withLatestFrom(spaceShip$),
+		rxo.map((cbr) => {
+			const [refresh, spaceShip] = cbr as [number, ISpaceShip];
+			return {
+				timestamp: refresh,
+				data: spaceShip,
+			};
+		}),
+	);
+
+	return withTimestamp.pipe(rxo.share());
 }
