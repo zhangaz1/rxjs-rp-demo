@@ -3,6 +3,11 @@ export enum Direction {
 	Down = 'Down',
 }
 
+export interface ITimeStampData<T> {
+	timeStamp: number;
+	data: T;
+}
+
 export interface IPoint {
 	x: number;
 	y: number;

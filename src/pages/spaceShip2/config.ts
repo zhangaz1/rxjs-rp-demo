@@ -9,7 +9,7 @@ export const defaultConfig: IConfig = {
 	starSize: 3,
 	starSpeed: 1,
 
-	refreshFreq: 80, // 画布刷新频率（ms)
+	refreshFreq: 40, // 画布刷新频率（ms)
 
 	playgroundBackground: '#000',
 

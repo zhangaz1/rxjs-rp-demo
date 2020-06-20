@@ -28,13 +28,18 @@ export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.O
 
 function moveStars(cbr: any) {
 	const [refresh, config, stars] = cbr as [number, IConfig, IStar[]];
-	return r.map((star: IStar) => {
+	const movedStars = r.map((star: IStar) => {
 		star.y += config.starSpeed;
 		if (star.y > config.height) {
 			star.y -= config.height;
 		}
 		return star;
 	})(stars);
+
+	return {
+		timeStamp: refresh,
+		data: movedStars,
+	}
 }
 
 function createStars(cbr: any) {
