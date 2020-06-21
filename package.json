@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "parcel src/index.html",
-    "dev": "parcel src/index.html --target browser --port 3000 --open",
+    "dev": "parcel src/index.html --target browser --open",
     "build": "parcel build src/index.html -d build --public-url ./"
   },
   "devDependencies": {
