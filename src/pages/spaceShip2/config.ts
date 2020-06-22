@@ -22,15 +22,21 @@ export const defaultConfig: IConfig = {
 	heroShotWidth: 5,
 	heroShotColor: '#ff0',
 	heroShotLimit: 200,
-	heroShotSpeed: -10,
+	heroShotSpeed: -15,
 	heroShotDirection: Direction.Up,
 
 	collisionDistance: 15,
 
-	enemyFreq: 1500,
+	enemyFreq: 3000,
 	enemySpeed: 2,
 	enemyColor: '#0f0',
 	enemyWidth: 10,
 	enemyWidthRange: 5,
 	enemyDirection: Direction.Down,
+
+	enemyShotFreq: 1000,
+	enemyShotSpeed: 7,
+	enemyShotColor: '#ff0',
+	enemyShotWidth: 5,
+	enemyShotDirection: Direction.Down,
 };

@@ -48,14 +48,23 @@ export interface IConfig extends ISize {
 	enemyWidth: number;
 	enemyWidthRange: number;
 	enemyDirection: Direction;
+
+	enemyShotFreq: number;
+	enemyShotSpeed: number;
+	enemyShotColor: string;
+	enemyShotWidth: number;
+	enemyShotDirection: Direction;
 };
 
 export interface IStar extends IPoint, ISize { };
 
 export interface ISpaceShip extends IPoint { };
 export interface IHeroShot extends IPoint { };
+export interface IEnemyShot extends IPoint { };
 export interface IEnemy extends IPoint {
 	isDead: boolean;
+	shots: IEnemyShot[];
+	shotsBuffer: IEnemyShot[];
 };
 
 export interface IGameContext {
