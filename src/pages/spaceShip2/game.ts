@@ -105,6 +105,9 @@ export function initGame(win: Window, config: IConfig) {
 						processCollision(game, collision as Function);
 						return game;
 					}),
+					rxo.withLatestFrom(collision$),
+					rxo.takeWhile(gameOver),
+					rxo.map(arr => arr[0]),
 				);
 
 			game$.subscribe((game: IGameContext) => {
@@ -117,6 +120,13 @@ export function initGame(win: Window, config: IConfig) {
 	return {
 		start: game.start.bind(game),
 	};
+}
+
+function gameOver(crb: any) {
+	const [game, collision] = crb as [IGameContext, Function];
+	return !r.any((enemy: IEnemy) => {
+		return collision(enemy, game.spaceShip) || r.any(shot => collision(shot, game.spaceShip))(enemy.shots);
+	})(game.enemies);
 }
 
 function createRefreshStream(config$: rx.Observable<IConfig>) {
