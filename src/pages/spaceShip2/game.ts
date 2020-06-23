@@ -45,7 +45,7 @@ export function initGame(win: Window, config: IConfig) {
 
 
 			const refresh$ = createRefreshStream(config$);
-			const stars$ = createStarsStream(refresh$, config$);
+			const stars$ = createStarsStream(refresh$, config$);
 			const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$);
 			const enemies$ = createEnemiesStream(refresh$, config$);
 
