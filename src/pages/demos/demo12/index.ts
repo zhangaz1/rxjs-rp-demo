@@ -9,7 +9,7 @@ import { observer } from '../utils';
 
 const duration = 30;
 
-let refresh$ = rx.interval(1000).pipe(watch('refresh$', duration));
+let refresh$ = rx.interval(1000);
 
 let canvas$ = rx.interval(500).pipe(
 	rxo.map(() => ({ name: 'canvas', size: { height: 100, width: 150, } }))
@@ -25,17 +25,39 @@ let source1$ = r.pipe(
 	r.partialRight(withLatest, [{ canvas: canvas$, config: config$ }])
 )(refresh$);
 
-let shot$ = createShotStream(source1$).pipe(
-	watch('source1$', duration),
-	rxo.takeWhile((o, index) => {
-		if (o.value.y > o.config.size.height) {
-			o.stop();
-		}
-		return true;
-	}),
-);
+let shot$ = createShotStream(source1$);
 
-let subscription = shot$.subscribe(console.log, undefined, () => subscription.unsubscribe());
+autoUnsubscribe({ source$: shot$ });
+
+function autoUnsubscribe<T>({ source$, next, error, complete, log }: {
+	source$: rx.Observable<T>,
+	next?: (t: T) => void,
+	error?: (err: any) => void,
+	complete?: () => void,
+	log?: (msg: any) => void,
+}) {
+	log = (log || console.log);
+
+	const defaultObserver = {
+		next: next || log,
+		error: (err: any) => {
+			// @ts-ignore
+			(error || log)(err);
+			unsubscribe();
+		},
+		complete: () => {
+			// @ts-ignore
+			(complete || log)('compelete');
+			unsubscribe();
+		},
+	};
+
+	const subscription = source$.subscribe(defaultObserver);
+
+	function unsubscribe() {
+		setTimeout(() => subscription.unsubscribe(), 0);
+	}
+}
 
 
 function createShotStream(source$: rx.Observable<object>) {
@@ -49,6 +71,13 @@ function createShotStream(source$: rx.Observable<object>) {
 			};
 			return obj;
 		}, { value: { x: 100, y: 100, } }),
+		rxo.takeWhile((o: any) => {
+			if (o.value.y > o.config.size.height) {
+				o.stop();
+				return false;
+			}
+			return true;
+		}),
 	);
 }
 
