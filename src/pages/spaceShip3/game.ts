@@ -43,72 +43,42 @@ export function initGame(win: Window, config: IConfig) {
 				}),
 			);
 
-
-			const refresh$ = createRefreshStream(config$);
-			const stars$ = createStarsStream(refresh$, config$);
-			const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$);
-			const enemies$ = createEnemiesStream(refresh$, config$);
-
-			const documentKeydown$ = createDocumentKeydownStream(win);
-			const heroShots$ = createHeroShotsStream(
-				canvas,
-				documentKeydown$ as rx.Observable<KeyboardEvent>,
-				refresh$,
-				config$,
-				spaceShip$,
-			);
-
 			const animation$ = rx.animationFrames();
-			const collision$ = config$.pipe(
-				rxo.map(config => r.partial(collision, [config.collisionDistance])),
+			const refresh$ = animation$.pipe(
+				rxo.withLatestFrom(config$),
+				rxo.map(([n, config]) => config),
+				rxo.timestamp(),
+				rxo.map(({ value, timestamp }) => ({ config: value, timestamp })),
 			);
-			const game$ = rx.combineLatest(refresh$, stars$, spaceShip$, heroShots$, enemies$)
-				.pipe(
-					rxo.map((cbr: any) => {
-						const [refresh, stars, spaceShip, heroShots, enemies] = cbr as [
-							number,
-							ITimestampData<IStar[]>,
-							ITimestampData<ISpaceShip>,
-							ITimestampData<IHeroShot[]>,
-							ITimestampData<IEnemy[]>,
-						];
 
-						return {
-							refresh,
-							stars,
-							spaceShip,
-							heroShots,
-							enemies,
-						};
-					}),
-					rxo.filter((game: any) => {
-						return game.refresh === game.stars.timestamp
-							&& game.refresh === game.spaceShip.timestamp
-							&& game.refresh === game.heroShots.timestamp
-							&& game.refresh === game.enemies.timestamp;
-					}),
-					rxo.sample(animation$),
-					rxo.withLatestFrom(config$),
-					rxo.map((cbr: any) => {
-						const [game, config] = cbr;
+			refresh$.pipe(rxo.take(3))
+				.subscribe(console.log);
 
-						return {
-							config,
-							stars: game.stars.data,
-							spaceShip: game.spaceShip.data,
-							heroShots: game.heroShots.data,
-							enemies: game.enemies.data,
-						} as IGameContext;
-					}),
-					rxo.withLatestFrom(collision$),
-					rxo.map(([game, collision]) => {
-						processCollision(game, collision as Function);
-						return game;
-					}),
-				);
+			// const refresh$ = createRefreshStream(config$);
+			// const stars$ = createStarsStream(refresh$, config$);
+			// const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$);
+			// const enemies$ = createEnemiesStream(refresh$, config$);
 
-			game$.subscribe((game: IGameContext) => {
-				refreshDiagram(canvas, game);
+			// const documentKeydown$ = createDocumentKeydownStream(win);
+			// const heroShots$ = createHeroShotsStream(
+			// 	canvas,
+			// 	documentKeydown$ as rx.Observable<KeyboardEvent>,
+			// 	refresh$,
+			// 	config$,
+			// 	spaceShip$,
+			// );
+
+			// const collision$ = config$.pipe(
+			// 	rxo.map(config => r.partial(collision, [config.collisionDistance])),
+			// );
+
+			const game$ = animation$.pipe(
+				rxo.withLatestFrom(config$),
+				rxo.map(([n, config]) => config as IConfig),
+			);
+			const gameSubscription = game$.subscribe((config) => {
+				const canvasContext = canvas.getContext('2d') as CanvasRenderingContext2D;
+				diagram.clearDiagram(canvasContext, config);
 			});
 
 		},
@@ -128,17 +98,6 @@ function createRefreshStream(config$: rx.Observable<IConfig>) {
 	) as rx.Observable<number>;
 }
 
-// let refreshCount: number = 0;
-function refreshDiagram(canvas: HTMLCanvasElement, game: IGameContext) {
-	const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-	const { config, stars, spaceShip, heroShots, enemies } = game;
-
-	diagram.clearDiagram(ctx, config);
-	diagram.drawStars(ctx, config, stars);
-	diagram.drawSpaceShip(ctx, config, spaceShip);
-	diagram.drawHeroShots(ctx, config, heroShots);
-	diagram.drawEnemies(ctx, config, enemies);
-}
 
 
 
