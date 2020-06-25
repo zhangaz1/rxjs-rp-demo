@@ -52,10 +52,10 @@ function autoUnsubscribe<T>({ source$, next, error, complete, log }: {
 		},
 	};
 
-	const subscription = source$.subscribe(defaultObserver);
+	const ps = Promise.resolve(source$.subscribe(defaultObserver));
 
 	function unsubscribe() {
-		setTimeout(() => subscription.unsubscribe(), 0);
+		ps.then(subscription => subscription.unsubscribe());
 	}
 }
 
