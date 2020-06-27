@@ -44,7 +44,7 @@ export function initGame(win: Window, config: IConfig) {
 				toStoppable,
 				toObject
 			)
-				(rx.animationFrames())
+				(rx.interval(config.refreshFreq))
 				.pipe(rxo.share());
 
 			const winSize$ = createWindowSizeStream(rootSource$, win);
@@ -66,13 +66,15 @@ export function initGame(win: Window, config: IConfig) {
 				r.partialRight(withLatest, [{ config: config$ }]),
 				withTimestamp
 			)(rootSource$)
-				.pipe(rxo.share());
+				.pipe(
+					rxo.share(),
+				);
 
 			const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 			autoUnsubscribe({ source$: refresh$, next: ({ config }: { config: IConfig }) => diagram.clearDiagram(ctx, config) });
 
-			drawStars(createStarsStream(refresh$), star => {
+			drawStars(createStarsStream(refresh$, config$), star => {
 				ctx.fillStyle = config.starColor;
 				diagram.drawStar(ctx, star);
 			});

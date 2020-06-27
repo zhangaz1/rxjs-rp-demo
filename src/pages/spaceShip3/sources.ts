@@ -13,6 +13,11 @@ export function createWindowSizeStream(refresh$: rx.Observable<any>, win: Window
 			rxo.startWith(win),
 			rxo.map(getWinSize),
 			rxo.sample(refresh$),
+			rxo.distinctUntilChanged((last, current) => {
+				return last.width === current.width
+					&& last.height === current.height;
+			}),
+			rxo.share(),
 		);
 };
 

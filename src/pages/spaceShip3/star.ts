@@ -3,24 +3,23 @@ import * as r from 'ramda';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
-import { IConfig, IStar, ITimestampData } from './interfaces';
+import {
+	IConfig,
+	IStar,
+} from './interfaces';
 
 import {
 	getRandomInt,
-	scanner,
 	autoUnsubscribe,
 	toStoppable,
-	withLatest,
 } from './utils';
 
-export function createStarsStream(refresh$: rx.Observable<any>) {
-	return refresh$.pipe(
-		rxo.map(({ config }) => config.stars),
-		rxo.distinctUntilChanged(),
+export function createStarsStream(refresh$: rx.Observable<{ config: IConfig }>, config$: rx.Observable<IConfig>) {
+	return config$.pipe(
+		rxo.map(config => config.stars),
 		rxo.map(createStars),
 		rxo.startWith(null),
 		rxo.pairwise(),
-		// rxo.take(3),
 	);
 
 	function createStars(n: number) {
@@ -29,12 +28,8 @@ export function createStarsStream(refresh$: rx.Observable<any>) {
 			stars$: rx.range(0, n).pipe(
 				rxo.map(
 					n => toStoppable(refresh$, stop$$).pipe(
-						rxo.map((ctx: any) => {
-							ctx.star = createStar(ctx.config);
-							return ctx;
-						}),
 						rxo.scan(
-							(last: { star: { y: number } }, current) => {
+							(last: { star: IStar }, current: { star: IStar, config: IConfig }) => {
 								current.star = last
 									? r.mergeRight(last.star, { y: moveStarY(last, current) })
 									: createStar(current.config);
@@ -42,9 +37,7 @@ export function createStarsStream(refresh$: rx.Observable<any>) {
 							},
 							null
 						),
-						// rxo.take(3))
 					),
-					rxo.take(1),
 				),
 			),
 			stop: () => {
@@ -64,7 +57,7 @@ export function createStarsStream(refresh$: rx.Observable<any>) {
 	}
 }
 
-function moveStarY(last, current) {
+function moveStarY(last: { star: IStar }, current: { config: IConfig }) {
 	return (last.star.y + current.config.starSpeed) % current.config.height;
 }
 
@@ -76,9 +69,12 @@ export function drawStars(starsSource$: rx.Observable<any>, drawStar: (star: ISt
 				old.stop();
 			}
 
-			stars$.subscribe(star$ => star$.subscribe(ctx => {
-				drawStar(ctx.star);
-			}));
+			stars$.subscribe((star$: rx.Observable<{ star: IStar }>) =>
+				star$.pipe(
+					rxo.map((ctx) => ctx.star)
+				)
+					.subscribe(drawStar)
+			);
 		},
 	});
 }
