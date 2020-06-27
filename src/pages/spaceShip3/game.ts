@@ -13,7 +13,14 @@ import {
 	IGameContext,
 } from './interfaces';
 
-import { collision } from './utils';
+import {
+	collision,
+	autoUnsubscribe,
+	toObject,
+	toStoppable,
+	withTimestamp,
+	withLatest,
+} from './utils';
 
 import {
 	createWindowSizeStream,
@@ -21,7 +28,7 @@ import {
 } from './sources';
 
 import * as diagram from './diagram';
-import { createStarsStream } from './star';
+import { createStarsStream, drawStars } from './star';
 import { createSpaceShipStream } from './spaceShip';
 import { createEnemiesStream } from './enemy';
 import { createHeroShotsStream } from './heroShots';
@@ -32,27 +39,48 @@ export function initGame(win: Window, config: IConfig) {
 		start: function () {
 			const canvas = diagram.createCanvas(win);
 
-			const winSize$ = createWindowSizeStream(win);
-			winSize$.subscribe(size => {
-				canvas.width = size.width;
-				canvas.height = size.height;
+
+			const rootSource$ = r.compose(
+				toStoppable,
+				toObject
+			)
+				(rx.animationFrames())
+				.pipe(rxo.share());
+
+			const winSize$ = createWindowSizeStream(rootSource$, win);
+			autoUnsubscribe({
+				source$: winSize$, next: size => {
+					canvas.width = size.width;
+					canvas.height = size.height;
+				}
 			});
+
 			const config$: rx.Observable<IConfig> = winSize$.pipe(
 				rxo.map(size => {
 					return r.merge(config, size);
 				}),
+				rxo.sample(rootSource$),
 			);
 
-			const animation$ = rx.animationFrames();
-			const refresh$ = animation$.pipe(
-				rxo.withLatestFrom(config$),
-				rxo.map(([n, config]) => config),
-				rxo.timestamp(),
-				rxo.map(({ value, timestamp }) => ({ config: value, timestamp })),
-			);
+			const refresh$ = r.compose(
+				r.partialRight(withLatest, [{ config: config$ }]),
+				withTimestamp
+			)(rootSource$)
+				.pipe(rxo.share());
 
-			refresh$.pipe(rxo.take(3))
-				.subscribe(console.log);
+			const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+			autoUnsubscribe({ source$: refresh$, next: ({ config }: { config: IConfig }) => diagram.clearDiagram(ctx, config) });
+
+			drawStars(createStarsStream(refresh$), star => {
+				ctx.fillStyle = config.starColor;
+				diagram.drawStar(ctx, star);
+			});
+
+
+			// const game$ = refresh$;
+
+			// autoUnsubscribe({ source$: game$ })
 
 			// const refresh$ = createRefreshStream(config$);
 			// const stars$ = createStarsStream(refresh$, config$);
@@ -72,14 +100,14 @@ export function initGame(win: Window, config: IConfig) {
 			// 	rxo.map(config => r.partial(collision, [config.collisionDistance])),
 			// );
 
-			const game$ = animation$.pipe(
-				rxo.withLatestFrom(config$),
-				rxo.map(([n, config]) => config as IConfig),
-			);
-			const gameSubscription = game$.subscribe((config) => {
-				const canvasContext = canvas.getContext('2d') as CanvasRenderingContext2D;
-				diagram.clearDiagram(canvasContext, config);
-			});
+			// const game$ = animation$.pipe(
+			// 	rxo.withLatestFrom(config$),
+			// 	rxo.map(([n, config]) => config as IConfig),
+			// );
+			// const gameSubscription = game$.subscribe((config) => {
+			// 	const canvasContext = canvas.getContext('2d') as CanvasRenderingContext2D;
+			// 	diagram.clearDiagram(canvasContext, config);
+			// });
 
 		},
 	};

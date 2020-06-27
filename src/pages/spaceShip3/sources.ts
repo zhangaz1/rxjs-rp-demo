@@ -6,12 +6,13 @@ export function createDocumentKeydownStream(win: Window) {
 	return rx.fromEvent(win.document, 'keydown');
 };
 
-export function createWindowSizeStream(win: Window) {
+export function createWindowSizeStream(refresh$: rx.Observable<any>, win: Window) {
 	return rx.fromEvent(win, 'resize')
 		.pipe(
 			rxo.map((event: Event) => (event.target as Window)),
 			rxo.startWith(win),
 			rxo.map(getWinSize),
+			rxo.sample(refresh$),
 		);
 };
 

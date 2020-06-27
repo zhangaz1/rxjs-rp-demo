@@ -27,7 +27,7 @@ export function drawStars(ctx: CanvasRenderingContext2D, config: IConfig, stars:
 	r.forEach(r.curry(drawStar)(ctx))(stars);
 };
 
-function drawStar(ctx: CanvasRenderingContext2D, star: IStar) {
+export function drawStar(ctx: CanvasRenderingContext2D, star: IStar) {
 	ctx.fillRect(star.x, star.y, star.width, star.height);
 }
 

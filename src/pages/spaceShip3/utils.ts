@@ -1,7 +1,7 @@
 import * as r from 'ramda';
 
 import * as rx from 'rxjs';
-import * as rxo from 'rxjs';
+import * as rxo from 'rxjs/operators';
 
 import {
 	IPoint,
@@ -25,7 +25,7 @@ export function collision(minDistance: number, p1: IPoint, p2: IPoint) {
 }
 
 
-function autoUnsubscribe<T>({ source$, next, error, complete, log }: {
+export function autoUnsubscribe<T>({ source$, next, error, complete, log }: {
 	source$: rx.Observable<T>,
 	next?: (t: T) => void,
 	error?: (err: any) => void,
@@ -48,44 +48,21 @@ function autoUnsubscribe<T>({ source$, next, error, complete, log }: {
 		},
 	};
 
-	const subscription = source$.subscribe(defaultObserver);
+	const ps = Promise.resolve(source$.subscribe(defaultObserver));
 
 	function unsubscribe() {
-		setTimeout(() => subscription.unsubscribe(), 0);
+		ps.then(subscription => subscription.unsubscribe());
 	}
 }
 
-
-function createShotStream(source$: rx.Observable<object>) {
-	return source$.pipe(
-		rxo.scan((acc, obj: any) => {
-			let value = acc.value;
-
-			obj.value = {
-				x: value.x,
-				y: value.y + obj.config.speed,
-			};
-			return obj;
-		}, { value: { x: 100, y: 100, } }),
-		rxo.takeWhile((o: any) => {
-			if (o.value.y > o.config.size.height) {
-				o.stop();
-				return false;
-			}
-			return true;
-		}),
-	);
-}
-
-function withTimestamp(source$: rx.Observable<object>) {
+export function withTimestamp(source$: rx.Observable<object>) {
 	return source$.pipe(
 		rxo.timeInterval(),
 		rxo.map(obj => r.mergeRight(obj.value, { interval: obj.interval })),
 	);
 }
 
-function createStoppable(source$: rx.Observable<object>) {
-	const stop$$ = new rx.Subject();
+export function toStoppable(source$: rx.Observable<object>, stop$$ = new rx.Subject()) {
 	return source$.pipe(
 		rxo.takeUntil(stop$$),
 		rxo.map(
@@ -99,7 +76,7 @@ function createStoppable(source$: rx.Observable<object>) {
 	);
 }
 
-function withLatest(source$: rx.Observable<object>, withs: object) {
+export function withLatest(source$: rx.Observable<object>, withs: object) {
 	const combineWiths$ = conbineLatests(withs);
 	return source$.pipe(
 		rxo.withLatestFrom(combineWiths$),
@@ -107,7 +84,7 @@ function withLatest(source$: rx.Observable<object>, withs: object) {
 	);
 }
 
-function conbineLatests(withs: any) {
+export function conbineLatests(withs: any) {
 	const streams = r.values(withs);
 	return rx.combineLatest(streams)
 		.pipe(
@@ -115,7 +92,7 @@ function conbineLatests(withs: any) {
 		);
 }
 
-function toObject(source$: rx.Observable<any>): rx.Observable<object> {
+export function toObject(source$: rx.Observable<any>): rx.Observable<object> {
 	return source$.pipe(
 		rxo.map(value => ({ value })),
 	);

@@ -1,60 +1,84 @@
 import * as r from 'ramda';
+
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
+
+import { IConfig, IStar, ITimestampData } from './interfaces';
+
 import {
 	getRandomInt,
 	scanner,
+	autoUnsubscribe,
+	toStoppable,
+	withLatest,
 } from './utils';
-import { IConfig, IStar, ITimestampData } from './interfaces';
 
-export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ITimestampData<IStar[]>> {
-	const starNumber$ = rx.range(0, 256)
-		.pipe(
-			rxo.scan(scanner, [] as number[]),
-		);
-
-	const star$ = starNumber$.pipe(
-		rxo.withLatestFrom(config$),
+export function createStarsStream(refresh$: rx.Observable<any>) {
+	return refresh$.pipe(
+		rxo.map(({ config }) => config.stars),
+		rxo.distinctUntilChanged(),
 		rxo.map(createStars),
+		rxo.startWith(null),
+		rxo.pairwise(),
+		// rxo.take(3),
 	);
 
-	const movingStars = refresh$.pipe(
-		rxo.withLatestFrom(config$, star$),
-		rxo.map(moveStars)
-	);
+	function createStars(n: number) {
+		const stop$$ = new rx.Subject();
+		return {
+			stars$: rx.range(0, n).pipe(
+				rxo.map(
+					n => toStoppable(refresh$, stop$$).pipe(
+						rxo.map((ctx: any) => {
+							ctx.star = createStar(ctx.config);
+							return ctx;
+						}),
+						rxo.scan(
+							(last: { star: { y: number } }, current) => {
+								current.star = last
+									? r.mergeRight(last.star, { y: moveStarY(last, current) })
+									: createStar(current.config);
+								return current;
+							},
+							null
+						),
+						// rxo.take(3))
+					),
+					rxo.take(1),
+				),
+			),
+			stop: () => {
+				stop$$.next();
+				stop$$.complete();
+			}
+		};
+	}
 
-	const withTimestamp$ = movingStars.pipe(
-		rxo.withLatestFrom(refresh$),
-		rxo.map(([stars, refresh]) => ({
-			timestamp: refresh as number,
-			data: stars,
-		})),
-	);
-
-	return withTimestamp$.pipe(rxo.share());
+	function createStar(config: IConfig) {
+		return {
+			x: getRandomInt(0, config.width),
+			y: getRandomInt(0, config.height),
+			width: getRandomInt(1, config.starSize),
+			height: getRandomInt(1, config.starSize),
+		};
+	}
 }
 
-function moveStars(cbr: any) {
-	const [refresh, config, stars] = cbr as [number, IConfig, IStar[]];
-	return r.map((star: IStar) => {
-		star.y += config.starSpeed;
-		if (star.y > config.height) {
-			star.y -= config.height;
-		}
-		return star;
-	})(stars);
+function moveStarY(last, current) {
+	return (last.star.y + current.config.starSpeed) % current.config.height;
 }
 
-function createStars(cbr: any) {
-	const [stars, config] = cbr as [number[], IConfig];
-	return r.map(r.partial(createStar, [config]))(stars);
-}
+export function drawStars(starsSource$: rx.Observable<any>, drawStar: (star: IStar) => void) {
+	autoUnsubscribe({
+		source$: starsSource$,
+		next: ([old, { stars$ }]) => {
+			if (old) {
+				old.stop();
+			}
 
-function createStar(config: IConfig) {
-	return {
-		x: getRandomInt(0, config.width),
-		y: getRandomInt(0, config.height),
-		width: getRandomInt(1, config.starSize),
-		height: getRandomInt(1, config.starSize),
-	};
+			stars$.subscribe(star$ => star$.subscribe(ctx => {
+				drawStar(ctx.star);
+			}));
+		},
+	});
 }
