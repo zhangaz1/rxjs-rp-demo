@@ -11,8 +11,8 @@ export function createWindowSizeStream(refresh$: rx.Observable<any>, win: Window
 		.pipe(
 			rxo.map((event: Event) => (event.target as Window)),
 			rxo.startWith(win),
-			rxo.map(getWinSize),
 			rxo.sample(refresh$),
+			rxo.map(getWinSize),
 			rxo.distinctUntilChanged((last, current) => {
 				return last.width === current.width
 					&& last.height === current.height;

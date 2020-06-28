@@ -28,6 +28,8 @@ import {
 } from './sources';
 
 import * as diagram from './diagram';
+
+import { createBackgroundStream, drawBackground } from './background';
 import { createStarsStream, drawStars } from './star';
 import { createSpaceShipStream } from './spaceShip';
 import { createEnemiesStream } from './enemy';
@@ -39,15 +41,17 @@ export function initGame(win: Window, config: IConfig) {
 		start: function () {
 			const canvas = diagram.createCanvas(win);
 
+			const gameStop$$ = new rx.Subject();
 
-			const rootSource$ = r.compose(
-				toStoppable,
-				toObject
-			)
-				(rx.interval(config.refreshFreq))
-				.pipe(rxo.share());
+			const refresh$ = rx.interval(config.refreshFreq)
+				.pipe(
+					rxo.takeUntil(gameStop$$),
+					rxo.timeInterval(),
+					rxo.map(({ interval }) => interval),
+					rxo.share(),
+				);
 
-			const winSize$ = createWindowSizeStream(rootSource$, win);
+			const winSize$ = createWindowSizeStream(refresh$, win);
 			autoUnsubscribe({
 				source$: winSize$, next: size => {
 					canvas.width = size.width;
@@ -55,29 +59,29 @@ export function initGame(win: Window, config: IConfig) {
 				}
 			});
 
-			const config$: rx.Observable<IConfig> = winSize$.pipe(
+			const config$ = new rx.BehaviorSubject(config);
+			winSize$.pipe(
 				rxo.map(size => {
-					return r.merge(config, size);
+					return r.mergeRight(config, size);
 				}),
-				rxo.sample(rootSource$),
-			);
+			).subscribe(config$);
 
-			const refresh$ = r.compose(
-				r.partialRight(withLatest, [{ config: config$ }]),
-				withTimestamp
-			)(rootSource$)
-				.pipe(
-					rxo.share(),
-				);
 
 			const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-			autoUnsubscribe({ source$: refresh$, next: ({ config }: { config: IConfig }) => diagram.clearDiagram(ctx, config) });
+			drawBackground(
+				createBackgroundStream(refresh$),
+				config$,
+				r.partial(diagram.clearDiagram, [ctx])
+			);
 
-			drawStars(createStarsStream(refresh$, config$), star => {
-				ctx.fillStyle = config.starColor;
-				diagram.drawStar(ctx, star);
-			});
+			drawStars(
+				createStarsStream(refresh$, config$),
+				star => {
+					ctx.fillStyle = config.starColor;
+					diagram.drawStar(ctx, star);
+				}
+			);
 
 
 			// const game$ = refresh$;
