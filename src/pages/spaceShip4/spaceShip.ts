@@ -1,14 +1,21 @@
-import { IConfig, ISpaceShip, ITimestampData } from './interfaces';
 import * as rx from 'rxjs';
 import * as rxo from 'rxjs/operators';
 
-export function createSpaceShipStream(canvas: HTMLCanvasElement, refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>): rx.Observable<ITimestampData<ISpaceShip>> {
+import { IConfig, ISpaceShip, ITimestampData } from './interfaces';
+import { autoUnsubscribe } from './utils';
+
+export function createSpaceShipStream(
+	canvas: HTMLCanvasElement,
+	refresh$: rx.Observable<number>,
+	config$: rx.Observable<IConfig>
+) {
 	const firs$ = config$.pipe(
 		rxo.take(1),
-		rxo.map(config => ({
-			x: config.width / 2,
-			y: config.height - config.spaceShipYMargin,
-		})
+		rxo.map(config =>
+			({
+				x: config.width / 2,
+				y: config.height - config.spaceShipYMargin,
+			})
 		),
 	);
 
@@ -29,18 +36,23 @@ export function createSpaceShipStream(canvas: HTMLCanvasElement, refresh$: rx.Ob
 			}),
 		);
 
-	const spaceShip$ = rx.concat(firs$, movingSpaceShip$) as rx.Observable<ISpaceShip>;
-
-	const withTimestamp = refresh$.pipe(
-		rxo.withLatestFrom(spaceShip$),
-		rxo.map((cbr) => {
-			const [refresh, spaceShip] = cbr as [number, ISpaceShip];
-			return {
-				timestamp: refresh,
-				data: spaceShip,
-			};
-		}),
+	const spaceShip$ = refresh$.pipe(
+		rxo.withLatestFrom(rx.concat(firs$, movingSpaceShip$)),
+		rxo.map(([interval, spaceShip]) => spaceShip),
 	);
 
-	return withTimestamp.pipe(rxo.share());
+	return spaceShip$;
+}
+
+export function drawSpaceShip(
+	source$: rx.Observable<ISpaceShip>,
+	config$: rx.Observable<IConfig>,
+	drawSpaceShip: (config: IConfig, spaceShipe: ISpaceShip) => void
+) {
+	autoUnsubscribe({
+		source$: source$.pipe(
+			rxo.withLatestFrom(config$),
+		),
+		next: ([spaceShip, config]) => drawSpaceShip(config, spaceShip),
+	});
 }

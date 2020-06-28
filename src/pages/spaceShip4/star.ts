@@ -13,7 +13,10 @@ import {
 	autoUnsubscribe,
 } from './utils';
 
-export function createStarsStream(refresh$: rx.Observable<number>, config$: rx.Observable<IConfig>) {
+export function createStarsStream(
+	refresh$: rx.Observable<number>,
+	config$: rx.Observable<IConfig>
+) {
 	return config$.pipe(
 		rxo.map(config => config.stars),
 		rxo.map(createStars),
@@ -60,7 +63,10 @@ function moveStarY(last: IStar, config: IConfig) {
 	return (last.y + config.starSpeed) % config.height;
 }
 
-export function drawStars(starsSource$: rx.Observable<any>, drawStar: (star: IStar) => void) {
+export function drawStars(
+	starsSource$: rx.Observable<any>,
+	drawStar: (star: IStar) => void
+) {
 	autoUnsubscribe({
 		source$: starsSource$,
 		next: ([old, { stars$ }]) => {
@@ -68,7 +74,7 @@ export function drawStars(starsSource$: rx.Observable<any>, drawStar: (star: ISt
 				old.stop();
 			}
 
-			stars$.subscribe((star$: rx.Observable<IStar>) => star$.subscribe(drawStar);
+			stars$.subscribe((star$: rx.Observable<IStar>) => star$.subscribe(drawStar));
 		},
 	});
 }

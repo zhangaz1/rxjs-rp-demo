@@ -31,7 +31,7 @@ import * as diagram from './diagram';
 
 import { createBackgroundStream, drawBackground } from './background';
 import { createStarsStream, drawStars } from './star';
-import { createSpaceShipStream } from './spaceShip';
+import { createSpaceShipStream, drawSpaceShip } from './spaceShip';
 import { createEnemiesStream } from './enemy';
 import { createHeroShotsStream } from './heroShots';
 
@@ -51,7 +51,7 @@ export function initGame(win: Window, config: IConfig) {
 					rxo.share(),
 				);
 
-			const winSize$ = createWindowSizeStream(refresh$, win);
+			const winSize$ = createWindowSizeStream(refresh$, gameStop$$, win);
 			autoUnsubscribe({
 				source$: winSize$, next: size => {
 					canvas.width = size.width;
@@ -59,38 +59,33 @@ export function initGame(win: Window, config: IConfig) {
 				}
 			});
 
-			const config$ = new rx.BehaviorSubject(config);
+			const config$$ = new rx.BehaviorSubject(config);
 			winSize$.pipe(
 				rxo.map(size => {
 					return r.mergeRight(config, size);
 				}),
-			).subscribe(config$);
+			).subscribe(config$$);
 
 
 			const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 			drawBackground(
 				createBackgroundStream(refresh$),
-				config$,
+				config$$,
 				r.partial(diagram.clearDiagram, [ctx])
 			);
 
 			drawStars(
-				createStarsStream(refresh$, config$),
+				createStarsStream(refresh$, config$$),
 				star => {
 					ctx.fillStyle = config.starColor;
 					diagram.drawStar(ctx, star);
 				}
 			);
 
+			const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$$);
+			drawSpaceShip(spaceShip$, config$$, r.partial(diagram.drawSpaceShip, [ctx]));
 
-			// const game$ = refresh$;
-
-			// autoUnsubscribe({ source$: game$ })
-
-			// const refresh$ = createRefreshStream(config$);
-			// const stars$ = createStarsStream(refresh$, config$);
-			// const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$);
 			// const enemies$ = createEnemiesStream(refresh$, config$);
 
 			// const documentKeydown$ = createDocumentKeydownStream(win);
