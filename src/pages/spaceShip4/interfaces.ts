@@ -63,8 +63,8 @@ export interface IHeroShot extends IPoint { };
 export interface IEnemyShot extends IPoint { };
 export interface IEnemy extends IPoint {
 	isDead: boolean;
-	shots: IEnemyShot[];
-	shotsBuffer: IEnemyShot[];
+	stop: () => void;
+	config?: IConfig;
 };
 
 export interface IGameContext {

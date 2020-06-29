@@ -25,12 +25,12 @@ export function createStarsStream(
 	);
 
 	function createStars(n: number) {
-		const stopStars$$ = new rx.Subject();
+		const starsStop$$ = new rx.Subject();
 		return {
 			stars$: rx.range(0, n).pipe(
 				rxo.map(
 					n => refresh$.pipe(
-						rxo.takeUntil(stopStars$$),
+						rxo.takeUntil(starsStop$$),
 						rxo.withLatestFrom(config$),
 						rxo.scan(
 							(last: IStar | null, [interval, config]) =>
@@ -43,8 +43,8 @@ export function createStarsStream(
 				),
 			),
 			stop: () => {
-				stopStars$$.next();
-				stopStars$$.complete();
+				starsStop$$.next();
+				starsStop$$.complete();
 			}
 		};
 	}

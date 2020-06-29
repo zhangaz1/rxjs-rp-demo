@@ -41,13 +41,8 @@ export function drawHeroShots(ctx: CanvasRenderingContext2D, config: IConfig, he
 	})(heroShots);
 };
 
-export function drawEnemies(ctx: CanvasRenderingContext2D, config: IConfig, enemies: IEnemy[]) {
-	r.forEach((enemy: IEnemy) => {
-		drawTriangle(ctx, enemy.x, enemy.y, config.enemyWidth, (enemy.isDead ? '#f00' : config.enemyColor), config.enemyDirection);
-		r.forEach((enemyShot: IEnemyShot) => {
-			drawTriangle(ctx, enemyShot.x, enemyShot.y, config.enemyShotWidth, config.enemyShotColor, config.enemyShotDirection);
-		})(enemy.shots);
-	})(enemies);
+export function drawEnemy(ctx: CanvasRenderingContext2D, config: IConfig, enemy: IEnemy) {
+	drawTriangle(ctx, enemy.x, enemy.y, config.enemyWidth, (enemy.isDead ? '#f00' : config.enemyColor), config.enemyDirection);
 };
 
 function drawTriangle(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, color: string, direction: string) {

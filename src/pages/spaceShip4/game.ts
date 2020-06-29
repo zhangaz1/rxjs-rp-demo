@@ -32,7 +32,7 @@ import * as diagram from './diagram';
 import { createBackgroundStream, drawBackground } from './background';
 import { createStarsStream, drawStars } from './star';
 import { createSpaceShipStream, drawSpaceShip } from './spaceShip';
-import { createEnemiesStream } from './enemy';
+import { createEnemiesStream, drawEnemies } from './enemy';
 import { createHeroShotsStream } from './heroShots';
 
 export function initGame(win: Window, config: IConfig) {
@@ -86,7 +86,8 @@ export function initGame(win: Window, config: IConfig) {
 			const spaceShip$ = createSpaceShipStream(canvas, refresh$, config$$);
 			drawSpaceShip(spaceShip$, config$$, r.partial(diagram.drawSpaceShip, [ctx]));
 
-			// const enemies$ = createEnemiesStream(refresh$, config$);
+			const enemies$ = createEnemiesStream(refresh$, gameStop$$, config$$);
+			drawEnemies(enemies$, r.partial(diagram.drawEnemy, [ctx]));
 
 			// const documentKeydown$ = createDocumentKeydownStream(win);
 			// const heroShots$ = createHeroShotsStream(
