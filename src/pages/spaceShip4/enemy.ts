@@ -37,10 +37,10 @@ export function createEnemiesStream(
 					: createEnemy(config, enemyStop$$),
 				null
 			),
-		);
+		) as rx.Observable<IEnemy>;
 	}
 
-	function createEnemy(config: IConfig, enemyStop$$: rx.Subject<void>) {
+	function createEnemy(config: IConfig, enemyStop$$: rx.Subject<void>): IEnemy {
 		return {
 			x: getRandomInt(0, config.width),
 			y: 0,
