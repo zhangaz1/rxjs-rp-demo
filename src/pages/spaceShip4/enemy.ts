@@ -35,7 +35,7 @@ export function createEnemiesStream(
 			rxo.scan(
 				(last: IEnemy | null, [n, config]) => last
 					? r.mergeRight(last, {
-						x: (last.x + getRandomInt(-config.enemyWidthRange, config.enemyWidthRange)) % config.width,
+						x: (last.x + getRandomInt(-config.enemyWidthRange, config.enemyWidthRange) + config.width) % config.width,
 						y: (last.y + config.enemySpeed) % config.height
 					})
 					: createEnemy(config, enemyStop$$),
