@@ -59,19 +59,13 @@ export interface IConfig extends ISize {
 export interface IStar extends IPoint, ISize { };
 
 export interface ISpaceShip extends IPoint { };
-export interface IHeroShot extends IPoint { };
+export interface IHeroShot extends IPoint {
+	config?: IConfig;
+	stop: () => void;
+};
 export interface IEnemyShot extends IPoint { };
 export interface IEnemy extends IPoint {
 	isDead: boolean;
 	stop: () => void;
 	config?: IConfig;
-};
-
-export interface IGameContext {
-	canvas: HTMLCanvasElement;
-	config: IConfig;
-	stars: IStar[];
-	spaceShip: ISpaceShip;
-	heroShots: IHeroShot[];
-	enemies: IEnemy[];
 };

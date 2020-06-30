@@ -15,7 +15,7 @@ export function createSpaceShipStream(
 			({
 				x: config.width / 2,
 				y: config.height - config.spaceShipYMargin,
-			})
+			} as ISpaceShip)
 		),
 	);
 
@@ -32,13 +32,14 @@ export function createSpaceShipStream(
 				return {
 					x: event.clientX,
 					y: config.height - config.spaceShipYMargin,
-				};
+				} as ISpaceShip;
 			}),
 		);
 
 	const spaceShip$ = refresh$.pipe(
 		rxo.withLatestFrom(rx.concat(firs$, movingSpaceShip$)),
 		rxo.map(([interval, spaceShip]) => spaceShip),
+		rxo.share(),
 	);
 
 	return spaceShip$;

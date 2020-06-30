@@ -19,6 +19,7 @@ export function createEnemiesStream(
 	const enemySource$ = config$.pipe(
 		rxo.map((config: IConfig) => rx.interval(config.enemyFreq)),
 		rxo.switchAll(),
+		rxo.take(3),// for temp test
 		rxo.takeUntil(gameStop$$),
 		rxo.map(createEnemyStream),
 	);

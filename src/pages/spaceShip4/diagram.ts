@@ -35,10 +35,8 @@ export function drawSpaceShip(ctx: CanvasRenderingContext2D, config: IConfig, sp
 	drawTriangle(ctx, spaceShip.x, spaceShip.y, config.spaceshipWidth, config.spaceShipColor, config.spaceShipDirection);
 };
 
-export function drawHeroShots(ctx: CanvasRenderingContext2D, config: IConfig, heroShots: IHeroShot[]) {
-	r.forEach((heroShot: IHeroShot) => {
-		drawTriangle(ctx, heroShot.x, heroShot.y, config.heroShotWidth, config.heroShotColor, config.heroShotDirection);
-	})(heroShots);
+export function drawHeroShot(ctx: CanvasRenderingContext2D, config: IConfig, heroShot: IHeroShot) {
+	drawTriangle(ctx, heroShot.x, heroShot.y, config.heroShotWidth, config.heroShotColor, config.heroShotDirection);
 };
 
 export function drawEnemy(ctx: CanvasRenderingContext2D, config: IConfig, enemy: IEnemy) {

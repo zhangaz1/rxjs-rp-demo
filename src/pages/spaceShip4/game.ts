@@ -33,7 +33,7 @@ import { createBackgroundStream, drawBackground } from './background';
 import { createStarsStream, drawStars } from './star';
 import { createSpaceShipStream, drawSpaceShip } from './spaceShip';
 import { createEnemiesStream, drawEnemies } from './enemy';
-import { createHeroShotsStream } from './heroShots';
+import { createHeroShotsStream, drawHeroShots } from './heroShots';
 
 export function initGame(win: Window, config: IConfig) {
 
@@ -89,14 +89,16 @@ export function initGame(win: Window, config: IConfig) {
 			const enemies$ = createEnemiesStream(refresh$, gameStop$$, config$$);
 			drawEnemies(enemies$, r.partial(diagram.drawEnemy, [ctx]));
 
-			// const documentKeydown$ = createDocumentKeydownStream(win);
-			// const heroShots$ = createHeroShotsStream(
-			// 	canvas,
-			// 	documentKeydown$ as rx.Observable<KeyboardEvent>,
-			// 	refresh$,
-			// 	config$,
-			// 	spaceShip$,
-			// );
+			const documentKeydown$ = createDocumentKeydownStream(win);
+			const heroShots$ = createHeroShotsStream(
+				canvas,
+				documentKeydown$ as rx.Observable<KeyboardEvent>,
+				refresh$,
+				config$$,
+				gameStop$$,
+				spaceShip$,
+			);
+			drawHeroShots(heroShots$, r.partial(diagram.drawHeroShot, [ctx]));
 
 			// const collision$ = config$.pipe(
 			// 	rxo.map(config => r.partial(collision, [config.collisionDistance])),
