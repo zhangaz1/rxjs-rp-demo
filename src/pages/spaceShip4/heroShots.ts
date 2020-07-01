@@ -71,12 +71,6 @@ export function createHeroShotsStream(
 
 }
 
-
-function moveShots(cbr: any) {
-	const [n, config, shots] = cbr as [number, IConfig, IHeroShot[]];
-	return r.forEach((shot: IHeroShot) => shot.y += config.heroShotSpeed)(shots);
-}
-
 export function drawHeroShots(
 	heroShots$: rx.Observable<rx.Observable<IHeroShot>>,
 	drawHeroShot: (config: IConfig, heroShot: IHeroShot) => void
